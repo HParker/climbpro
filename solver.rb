@@ -35,7 +35,8 @@ class Solver
 
   def valid?(new_positions)
     collisions = new_positions.select { |y, x|
-      y < @height && x < @width && @board[y][x] != "0"
+      return false if y > @height-1 || x > @width-1
+      @board[y][x] != "0"
     }
     collisions.empty?
   end
@@ -64,7 +65,7 @@ class Solver
        [y-1, x],
        [y, x+1],
        [y, x-1]].each do |y1, x1|
-        pieces[@board[y1][x1]] = [y1, x1] if !IMOVABLES.include?(@board[y1][x1]) && y1.between?(0, @height-1) && x1.between?(0, @width-1)
+        pieces[@board[y1][x1]] = [y1, x1] if y1.between?(0, @height-1) && x1.between?(0, @width-1) && !IMOVABLES.include?(@board[y1][x1]) 
       end
     end
     pieces
