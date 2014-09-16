@@ -65,7 +65,7 @@ class Solver
        [y-1, x],
        [y, x+1],
        [y, x-1]].each do |y1, x1|
-        pieces[@board[y1][x1]] = [y1, x1] if y1.between?(0, @height-1) && x1.between?(0, @width-1) && !IMOVABLES.include?(@board[y1][x1]) 
+        pieces[@board[y1][x1]] = [y1, x1] if y1.between?(0, @height-1) && x1.between?(0, @width-1) && !IMOVABLES.include?(@board[y1][x1])
       end
     end
     pieces

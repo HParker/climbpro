@@ -2,6 +2,15 @@ require_relative 'database'
 require_relative 'solver'
 require 'benchmark'
 
+BOARD12 = [
+           %w(# # 0 # #),
+           %w(A 0 0 0 B),
+           %w(A C C D B),
+           %w(E C D D F),
+           %w(F F I G G),
+           %w(H I I I J),
+]
+
 BOARD = [
 %w(I I I 0 I I I),
 %w(A A 0 0 0 B B),
