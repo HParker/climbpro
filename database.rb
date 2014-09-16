@@ -8,29 +8,23 @@ class Board
   belongs_to :parent, class_name: "Board", inverse_of: :children
   has_many :children, class_name: "Board", inverse_of: :parent
   
-  field :board, type: String
-  field :expanded, type: Boolean
+  field :contents, type: String
+  field :expanded, type: Boolean, default: false
 
-  field :_id, type: String, default: ->{ board }
+  field :_id, default: ->{ contents }
+
+  def self.build parent, child
+    parent = Board.find(parent) rescue nil
+    Board.create(parent: parent, contents: child) rescue nil
+  end
+
+  def self.next
+    Board.where(expanded: false).first.contents
+  end
+
+  def self.finish board
+    b = Board.find(board)
+    b.expanded = true
+    puts b.save
+  end
 end
-
-class Database
-  def save(board:, parent:)
-
-  end
-
-  def finish
-  
-  end
-
-  def next
-
-  end
-
-end
-
-b = Board.new(board: 'hifsello there')
-
-b.save rescue nil
-
-puts Board.count

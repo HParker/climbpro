@@ -1,6 +1,6 @@
 development:
   sessions:
     default:
-      database: mongoid
+      database: climbpro
       hosts:
         - localhost:27017
