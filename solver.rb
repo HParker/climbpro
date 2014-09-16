@@ -8,6 +8,8 @@ class Solver
 
   def initialize(board)
     @board = board
+    @height = board.size
+    @width = board[0].size
   end
 
 
@@ -33,7 +35,7 @@ class Solver
 
   def valid?(new_positions)
     collisions = new_positions.select { |y, x|
-      @board[y][x] != "0"
+      y < @height && x < @width && @board[y][x] != "0"
     }
     collisions.empty?
   end
@@ -55,7 +57,6 @@ class Solver
     raise "seems a space was lost along the way. :("
   end
 
-  # TODO: deal with boundaries.
   def pieces_that_might_move(spaces)
     pieces = {}
     spaces.each do |(y, x)|
@@ -63,7 +64,7 @@ class Solver
        [y-1, x],
        [y, x+1],
        [y, x-1]].each do |y1, x1|
-        pieces[@board[y1][x1]] = [y1, x1] if !IMOVABLES.include?(@board[y1][x1]) && y1 > -1 && x1 > -1
+        pieces[@board[y1][x1]] = [y1, x1] if !IMOVABLES.include?(@board[y1][x1]) && y1.between?(0, @height-1) && x1.between?(0, @width-1)
       end
     end
     pieces
@@ -73,28 +74,16 @@ class Solver
     proximal_spots.map { |spots| whole_piece(spots) }
   end
 
-  # TODO: optimize me!
-  # probably want to do a recursive expansion
-  # this just relies on the fact that any part of a piece
-  # is more than 3 places away from any other part.
-  # spots checked:
-  #     X
-  #   X X X
-  # X X O X X
-  #   X X X
-  #     X
-
   def whole_piece(spot, spots = [])
     char, (y, x) = spot
-    if @board[y][x] == char # && spots.size < 5
+    if y < @height && x < @width && @board[y][x] == char # && spots.size < 5
       spots << [y, x]
       whole_piece([char, [y+1,x]], spots) unless spots.include?([y+1, x])
       whole_piece([char, [y-1,x]], spots) unless spots.include?([y-1, x])
       whole_piece([char, [y,x+1]], spots) unless spots.include?([y, x+1])
       whole_piece([char, [y,x-1]], spots) unless spots.include?([y, x-1])
-    else
-      [char, spots]
     end
+    [char, spots]
   end
 
   def try_move(piece)
@@ -102,7 +91,8 @@ class Solver
              piece[1].map { |y, x| [y+1, x] },
              piece[1].map { |y, x| [y-1, x] },
              piece[1].map { |y, x| [y, x-1] },
-             piece[1].map { |y, x| [y, x+1] }]
+             piece[1].map { |y, x| [y, x+1] }
+                                                 ]
 
     moves.map { |move|
       new_board = copy

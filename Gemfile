@@ -1,4 +1,4 @@
 source 'https://rubygems.org'
 
-gem "moped", "~> 1.1.1"
-# TODO: consider bison_ext for improved BSON encoding speed
+# gem "moped", "~> 1.1.1"
+gem "mongoid", "~> 4.0.0"
