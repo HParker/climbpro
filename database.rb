@@ -8,13 +8,13 @@ class Board
   belongs_to :parent, class_name: "Board", inverse_of: :children
   has_many :children, class_name: "Board", inverse_of: :parent
   
-  field :contents, type: String
+  field :contents
   field :expanded, type: Boolean, default: false
 
-  field :_id, default: ->{ contents }
+  field :_id, default: ->{ contents.to_s } # simple for now
 
   def self.build parent, child
-    parent = Board.find(parent) rescue nil
+    parent = Board.find(parent.to_s) rescue nil
     Board.create(parent: parent, contents: child) rescue nil
   end
 
@@ -23,8 +23,8 @@ class Board
   end
 
   def self.finish board
-    b = Board.find(board)
+    b = Board.find(board.to_s)
     b.expanded = true
-    puts b.save
+    b.save
   end
 end

@@ -1,6 +1,8 @@
 # TODO: Fix place, fix whole piece, fix repeats
 class Solver
 
+  attr_accessor :board
+
   SPACE_CHAR = "0"
   IMOVABLES = ["I","0"]
 

@@ -1,3 +1,4 @@
+require_relative 'database'
 require_relative 'solver'
 require 'benchmark'
 
@@ -18,7 +19,31 @@ BOARD = [
 # pieces can only move one space at a time
 # these short moves will then be collapsed in the db.
 
-puts Solver.new(BOARD).next_boards.map(&:pp)
+Board.destroy_all
+Board.create(contents: BOARD)
+
+while true # while not_been_solved
+  b = Board.next
+  solver = Solver.new(b)
+
+  puts "Expanding:"
+  solver.pp
+
+  expanded_boards = solver.next_boards  
+
+  puts "Found:"
+  expanded_boards.map(&:pp)
+
+  expanded_boards.map do |nb|
+    Board.build(b, nb.board)
+  end
+  Board.finish(b)
+end
+# next_boards = Solver.new(BOARD).next_boards
+
+# puts next_boards.first.board
+
+# puts Solver.new(BOARD).next_boards.map(&:pp)
 
 # puts Benchmark.measure {
 #   10_000.times do
