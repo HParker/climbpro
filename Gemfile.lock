@@ -1,0 +1,10 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    moped (1.1.6)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  moped (~> 1.1.1)
