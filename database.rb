@@ -1,14 +1,36 @@
-class Database
-  include Mongo
-  def initialize(host: '127.0.0.1', port: '27017')
-    @db = Moped::Session.new(["Adams-MacBook-Pro-2.local:27017"]).db(:climb_pro)
-  end
+require 'mongoid'
 
-  def save(board:, parent_baord:)
-    # TODO: implement
-  end
+Mongoid.load!("db/mongoid.yml", :development)
 
-  def load_next
+class Board
+  include Mongoid::Document
 
-  end
+  belongs_to :parent, class_name: "Board", inverse_of: :children
+  has_many :children, class_name: "Board", inverse_of: :parent
+  
+  field :board, type: String
+  field :expanded, type: Boolean
+
+  field :_id, type: String, default: ->{ board }
 end
+
+class Database
+  def save(board:, parent:)
+
+  end
+
+  def finish
+  
+  end
+
+  def next
+
+  end
+
+end
+
+b = Board.new(board: 'hifsello there')
+
+b.save rescue nil
+
+puts Board.count
