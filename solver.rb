@@ -4,7 +4,7 @@ class Solver
   attr_accessor :board
 
   SPACE_CHAR = "0"
-  IMOVABLES = ["I","0"]
+  IMOVABLES = ["#","0"]
 
   def initialize(board)
     @board = board

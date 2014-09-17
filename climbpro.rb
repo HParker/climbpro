@@ -12,7 +12,7 @@ BOARD12 = [
 ]
 
 BOARD = [
-%w(I I I 0 I I I),
+%w(# # # 0 # # #),
 %w(A A 0 0 0 B B),
 %w(C C D D D E E),
 %w(C C F G G E E),
