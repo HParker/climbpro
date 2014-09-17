@@ -28,8 +28,8 @@ BOARD = [
 # pieces can only move one space at a time
 # these short moves will then be collapsed in the db.
 
-Board.destroy_all
-Board.create(contents: BOARD)
+# Board.destroy_all
+# Board.create(contents: BOARD12)
 
 puts Benchmark.measure {
   10_000.times do

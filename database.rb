@@ -10,20 +10,21 @@ class Board
   
   field :contents
   field :expanded, type: Boolean, default: false
+  field :created_at, type: Time
 
-  field :_id, default: ->{ contents.to_s } # simple for now
+  field :_id, default: ->{ contents.join('') } # simple for now
 
   def self.build parent, child
-    parent = Board.find(parent.to_s) rescue nil
-    Board.create(parent: parent, contents: child) rescue nil
+    parent = Board.find(parent.join('')) rescue nil
+    Board.create(parent: parent, contents: child, created_at: Time.now) rescue nil
   end
 
   def self.next
-    Board.where(expanded: false).first.contents
+    Board.where(expanded: false).asc(:create_at).first.contents
   end
 
   def self.finish board
-    b = Board.find(board.to_s)
+    b = Board.find(board.join(''))
     b.expanded = true
     b.save
   end
