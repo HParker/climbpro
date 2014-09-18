@@ -43,12 +43,15 @@ Board.destroy_all
 Board.create(contents: CLIMB_10)
 
 puts Benchmark.measure {
-  10_000.times do
+  10_000.times do |i|
     b = Board.next
     solver = Solver.new(b)
 
-    puts "Expanding:"
-    solver.pp
+    if i % 10 == 0
+      print '.'
+    end
+    # puts "Expanding:"
+    # solver.pretty_print
 
     expanded_boards = solver.next_boards
 
