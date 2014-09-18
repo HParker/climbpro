@@ -6,14 +6,14 @@ class Solver
   SPACE_CHAR = "0"
   IMOVABLES = ["#","0"]
 
-  def initialize(board)
+  def initialize(board, mode: :sprint)
     @board = board
     @height = board.size
     @width = board[0].size
+    @mode = mode
   end
 
-
-  def pp
+  def pretty_print
     puts "- - - - - - - - - - -"
     @board.each do |row|
       p row.join("  ")
