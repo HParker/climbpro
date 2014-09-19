@@ -15,6 +15,7 @@ class Board
   field :_id, default: ->{ contents.join('') } # simple for now
 
   def self.build parent, child
+    # TODO: just put the id there, we already know it.
     parent = Board.find(parent.join('')) rescue nil
     Board.create(parent: parent, contents: child, created_at: Time.now) rescue nil
   end

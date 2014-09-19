@@ -1,3 +1,5 @@
+require 'colorize'
+
 # TODO: Fix place, fix whole piece, fix repeats
 class Solver
 
@@ -6,20 +8,29 @@ class Solver
   SPACE_CHAR = "0"
   IMOVABLES = ["#","0"]
 
-  def initialize(board, mode: :sprint)
+  def initialize(board, mode: :sprint, colors: nil)
     @board = board
     @height = board.size
     @width = board[0].size
     @mode = mode
+    @colors = colors
   end
 
   def pretty_print
     puts "- - - - - - - - - - -"
     @board.each do |row|
-      p row.join("  ")
+      if @colors
+        colored_row = row.map do |spot|
+          color = @colors[spot]
+          "#{spot}".colorize(background: color)
+        end
+        puts
+        puts colored_row.join("   ")
+      else
+        p row.join("  ")
+      end
     end
-    puts "- - - - - - - - - - -"
-    puts
+    puts "- - - - - - - - - - -\n\n"
   end
 
   def next_boards

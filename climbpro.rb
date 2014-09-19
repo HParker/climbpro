@@ -2,15 +2,41 @@ require_relative 'database'
 require_relative 'solver'
 require 'benchmark'
 
+COLORS = {
+  "A" => :red,
+  "B" => :blue,
+  "C" => :green,
+  "D" => :yellow,
+  "E" => :black,
+  "F" => :magenta,
+  "G" => :cyan,
+  "H" => :white,
+  "I" => :red,
+  "J" => :blue,
+  "K" => :green,
+  "L" => :yellow,
+  "M" => :black,
+  "N" => :magenta,
+  "O" => :cyan,
+  "P" => :white,
+  "Q" => :red,
+  "R" => :blue,
+  "S" => :green,
+  "T" => :yellow,
+  "U" => :black,
+  "V" => :magenta,
+  "W" => :cyan,
+}
+
 CLIMB_10 = [
-            %w(# # # #),
-            %w(# 0 0 #),
-            %w(A 0 0 C),
-            %w(A A B C),
-            %w(D U U E),
-            %w(H U U F),
-            %w(H G F F),
-            %w(# # # #),
+            %w(# # # # # #),
+            %w(# # 0 0 # #),
+            %w(# A 0 0 C #),
+            %w(# A A B C #),
+            %w(# D U U E #),
+            %w(# H U U F #),
+            %w(# H G F F #),
+            %w(# # # # # #),
            ].freeze
 
 
@@ -41,19 +67,19 @@ CLIMB_24= [
 # pieces can only move one space at a time
 # these short moves will then be collapsed in the db.
 
-# Board.destroy_all
-# Board.create(contents: CLIMB_10)
+Board.destroy_all
+Board.create(contents: CLIMB_10)
 
 puts Benchmark.measure {
   10_000.times do |i|
     b = Board.next
-    solver = Solver.new(b)
+    solver = Solver.new(b, colors: COLORS)
 
-    if i % 10 == 0
-      print '.'
-    end
-    # puts "Expanding:"
-    # solver.pretty_print
+    # if i % 10 == 0
+    #   print '.'
+    # end
+    puts "Expanding:"
+    solver.pretty_print
 
     expanded_boards = solver.next_boards
 
