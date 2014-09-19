@@ -3,12 +3,14 @@ require_relative 'solver'
 require 'benchmark'
 
 CLIMB_10 = [
+            %w(# # # #),
             %w(# 0 0 #),
             %w(A 0 0 C),
             %w(A A B C),
             %w(D U U E),
             %w(H U U F),
-            %w(H G F F)
+            %w(H G F F),
+            %w(# # # #),
            ].freeze
 
 
@@ -39,8 +41,8 @@ CLIMB_24= [
 # pieces can only move one space at a time
 # these short moves will then be collapsed in the db.
 
-Board.destroy_all
-Board.create(contents: CLIMB_10)
+# Board.destroy_all
+# Board.create(contents: CLIMB_10)
 
 puts Benchmark.measure {
   10_000.times do |i|

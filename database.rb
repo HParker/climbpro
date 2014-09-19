@@ -7,7 +7,7 @@ class Board
 
   belongs_to :parent, class_name: "Board", inverse_of: :children
   has_many :children, class_name: "Board", inverse_of: :parent
-  
+
   field :contents
   field :expanded, type: Boolean, default: false
   field :created_at, type: Time

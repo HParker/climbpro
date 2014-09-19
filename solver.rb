@@ -42,7 +42,14 @@ class Solver
   end
 
   def lift(piece)
-    piece.each { |y, x| @board[y][x] = "0" }
+    piece[1].each { |y, x|
+      if @board[y][x] == piece[0]
+        @board[y][x] = "0"
+      else
+        puts "lifting piece improperly!"
+        binding.pry
+      end
+    }
   end
 
   private
@@ -97,7 +104,7 @@ class Solver
 
     moves.map { |move|
       new_board = copy
-      new_board.lift(piece[1])
+      new_board.lift(piece)
       if new_board.valid?(move)
         new_board.place(move, char: piece[0])
         new_board
