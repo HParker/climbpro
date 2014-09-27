@@ -1,8 +1,6 @@
 require 'colorize'
 require 'pry'
 
-SPACE = "0".ord
-
 class Solver
 
   attr_accessor :board
