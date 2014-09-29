@@ -3,16 +3,20 @@ require 'pry'
 
 class Solver
 
-  attr_accessor :board
+  Piece = Struct.new(:identity, :positions)
+
+  attr_accessor :board, :direction
 
   SPACE = "0".ord
   IMOVABLES = ["#".ord,"0".ord]
 
-  def initialize(board, colors: nil)
-    @board = board
+  def initialize(parent, colors: nil)
+    @board = parent.board
+    @parent_direction = parent.direction
     @height = board.size
     @width = board[0].size
     @colors = colors
+    @direction = nil
   end
 
   def pretty_print
@@ -38,31 +42,33 @@ class Solver
     pieces.map { |piece| try_move(piece) }.flatten.compact
   end
 
-  def place(positions, char:)
-    positions.each do |y, x|
-      @board[y][x] = char
+  private
+
+  def place(move)
+    piece, direction = move
+    piece.positions.each do |y, x|
+      @board[y][x] = piece.identity
     end
+    @direction = direction
   end
 
   def valid?(new_positions)
     collisions = new_positions.select { |y, x|
-      return false if y > @height-1 || x > @width-1
+      return false if y > @height-1 || x > @width-1 # TODO: might not be needed with explicit boundries
       @board[y][x] != SPACE
     }
     collisions.empty?
   end
 
   def lift(piece)
-    piece[1].each { |y, x|
-      if @board[y][x] == piece[0]
+    piece.positions.each { |y, x|
+      if @board[y][x] == piece.identity
         @board[y][x] = SPACE
       else
         raise "lifting piece improperly! #{piece.inspect} #{board.inspect}"
       end
     }
   end
-
-  private
 
   def find_spaces
     spaces = []
@@ -88,10 +94,29 @@ class Solver
   end
 
   def around(y, x)
-    [[y + 1, x],
-     [y - 1, x],
-     [y, x + 1],
-     [y, x - 1]]
+    case @parent_direciton
+    when :N
+      [[y - 1, x],
+       [y, x + 1],
+       [y, x - 1]]
+    when :S
+      [[y + 1, x],
+       [y, x + 1],
+       [y, x - 1]]
+    when :E
+      [[y + 1, x],
+       [y - 1, x],
+       [y, x + 1]]
+    when :W
+      [[y + 1, x],
+       [y - 1, x],
+       [y, x - 1]]
+    else
+      [[y + 1, x],
+       [y - 1, x],
+       [y, x + 1],
+       [y, x - 1]]
+    end
   end
 
   def whole_pieces(proximal_spots)
@@ -99,29 +124,29 @@ class Solver
   end
 
   def whole_piece(spot, spots = [])
-    char, (y, x) = spot
-    if y < @height && x < @width && @board[y][x] == char
+    identity, (y, x) = spot
+    if y < @height && x < @width && @board[y][x] == identity
       spots << [y, x]
       around(y, x).each do |y1, x1|
-        whole_piece([char, [y1,x1]], spots) unless spots.include?([y1, x1])
+        whole_piece([identity, [y1,x1]], spots) unless spots.include?([y1, x1])
       end
     end
-    [char, spots]
+    Piece.new(identity, spots)
   end
 
   def try_move(piece)
     moves = [
-             piece[1].map { |y, x| [y+1, x] },
-             piece[1].map { |y, x| [y-1, x] },
-             piece[1].map { |y, x| [y, x-1] },
-             piece[1].map { |y, x| [y, x+1] }
+             [piece.positions.map { |y, x| [y+1, x] }, :S],
+             [piece.positions.map { |y, x| [y-1, x] }, :N],
+             [piece.positions.map { |y, x| [y, x-1] }, :W],
+             [piece.positions.map { |y, x| [y, x+1] }, :E]
             ]
 
     moves.map { |move|
       new_board = copy
-      new_board.lift(piece)
-      if new_board.valid?(move)
-        new_board.place(move, char: piece[0])
+      new_board.lift(piece[0])
+      if new_board.valid?(move[0].positions)
+        new_board.place(move)
         new_board
       else
         nil

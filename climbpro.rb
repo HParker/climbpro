@@ -57,27 +57,26 @@ CLIMB_24 = [
 # pieces can only move one space at a time
 # these short moves will then be collapsed in the db.
 
+# TODO: celluloid and ruby with native threads.
+# record direction of moves
+# don't try directions you just moved from
+# local db buffer to prevent asking mongo for stuff so much
+
 Board.destroy_all
-Board.create(contents: CLIMB_10)
+Board.create(contents: CLIMB_24)
 
 puts Benchmark.measure {
   10_000.times do |i|
     b = Board.next
-    solver = Solver.new(b.contents, colors: COLORS)
+    solver = Solver.new(b, colors: COLORS)
 
-    # compact printing for long runs
-    # print '.' if i % 10 == 0
+    puts "Expanding:"
+    solver.pretty_print
 
     expanded_boards = solver.next_boards
 
-    # large printing for debugging
-    # puts "Expanding:"
-    # solver.pretty_print
-    # puts "Found: #{expanded_boards.size}"
-    # expanded_boards.map(&:pretty_print)
-
     expanded_boards.each do |nb|
-      Board.build(b, nb.board)
+      Board.build(b, nb)
     end
   end
-}
+end

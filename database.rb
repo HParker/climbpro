@@ -4,19 +4,21 @@ Mongoid.load!("db/mongoid.yml", :development)
 
 class Board
   include Mongoid::Document
-  # belongs_to :parent, class_name: "Board", inverse_of: :children
-  # has_many :children, class_name: "Board", inverse_of: :parent
 
-  field :contents, type: Array
+  field :board, type: Array
   field :parent_id, type: String
   field :expanded, type: Boolean, default: false
   field :moves, type: Integer, default: 0
-  field :_id, type: String, default: -> { contents.join() }
+  field :_id, type: String, default: -> { board.join }
+  field :direction, type: Symbol,
 
   def self.build(parent, child)
-    Board.create(contents: child, parent_id: parent.contents.join(),
+    Board.create(board: child.board,
+                 parent_id: parent.board.join,
+                 direction: child.direction,
                  moves: parent.moves + 1)
   rescue Moped::Errors::OperationFailure
+    puts "Duplicate Board"
   end
 
   def self.next
