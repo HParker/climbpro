@@ -58,8 +58,6 @@ CLIMB_24 = [
 # these short moves will then be collapsed in the db.
 
 # TODO: celluloid and ruby with native threads.
-# record direction of moves
-# don't try directions you just moved from
 # local db buffer to prevent asking mongo for stuff so much
 
 Board.destroy_all

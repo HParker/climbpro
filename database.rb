@@ -10,7 +10,7 @@ class Board
   field :expanded, type: Boolean, default: false
   field :moves, type: Integer, default: 0
   field :_id, type: String, default: -> { board.join }
-  field :direction, type: Symbol,
+  field :direction, type: Symbol
 
   def self.build(parent, child)
     Board.create(board: child.board,

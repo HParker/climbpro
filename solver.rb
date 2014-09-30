@@ -4,6 +4,7 @@ require 'pry'
 class Solver
 
   Piece = Struct.new(:identity, :positions)
+  Board = Struct.new(:board, :direction)
 
   attr_accessor :board, :direction
 
@@ -13,10 +14,9 @@ class Solver
   def initialize(parent, colors: nil)
     @board = parent.board
     @parent_direction = parent.direction
-    @height = board.size
-    @width = board[0].size
+    @height = parent.board.size
+    @width = parent.board[0].size
     @colors = colors
-    @direction = nil
   end
 
   def pretty_print
@@ -42,12 +42,9 @@ class Solver
     pieces.map { |piece| try_move(piece) }.flatten.compact
   end
 
-  private
-
-  def place(move)
-    piece, direction = move
-    piece.positions.each do |y, x|
-      @board[y][x] = piece.identity
+  def place(piece, identity:)
+    piece.each do |y, x|
+      @board[y][x] = identity
     end
     @direction = direction
   end
@@ -69,6 +66,8 @@ class Solver
       end
     }
   end
+
+  private
 
   def find_spaces
     spaces = []
@@ -94,29 +93,10 @@ class Solver
   end
 
   def around(y, x)
-    case @parent_direciton
-    when :N
-      [[y - 1, x],
-       [y, x + 1],
-       [y, x - 1]]
-    when :S
-      [[y + 1, x],
-       [y, x + 1],
-       [y, x - 1]]
-    when :E
-      [[y + 1, x],
-       [y - 1, x],
-       [y, x + 1]]
-    when :W
-      [[y + 1, x],
-       [y - 1, x],
-       [y, x - 1]]
-    else
-      [[y + 1, x],
-       [y - 1, x],
-       [y, x + 1],
-       [y, x - 1]]
-    end
+    [[y + 1, x],
+     [y - 1, x],
+     [y, x + 1],
+     [y, x - 1]]
   end
 
   def whole_pieces(proximal_spots)
@@ -135,18 +115,44 @@ class Solver
   end
 
   def try_move(piece)
-    moves = [
-             [piece.positions.map { |y, x| [y+1, x] }, :S],
-             [piece.positions.map { |y, x| [y-1, x] }, :N],
-             [piece.positions.map { |y, x| [y, x-1] }, :W],
-             [piece.positions.map { |y, x| [y, x+1] }, :E]
-            ]
-
-    moves.map { |move|
-      new_board = copy
-      new_board.lift(piece[0])
-      if new_board.valid?(move[0].positions)
-        new_board.place(move)
+    case @parent_direction
+    when :N
+      moves = [
+               [piece.positions.map { |y, x| [y-1, x] }, :N],
+               [piece.positions.map { |y, x| [y, x-1] }, :W],
+               [piece.positions.map { |y, x| [y, x+1] }, :E]
+              ]
+    when :S
+      moves = [
+               [piece.positions.map { |y, x| [y+1, x] }, :S],
+               [piece.positions.map { |y, x| [y, x-1] }, :W],
+               [piece.positions.map { |y, x| [y, x+1] }, :E]
+              ]
+    when :E
+      moves = [
+               [piece.positions.map { |y, x| [y+1, x] }, :S],
+               [piece.positions.map { |y, x| [y-1, x] }, :N],
+               [piece.positions.map { |y, x| [y, x+1] }, :E]
+              ]
+    when :W
+      moves = [
+               [piece.positions.map { |y, x| [y+1, x] }, :S],
+               [piece.positions.map { |y, x| [y-1, x] }, :N],
+               [piece.positions.map { |y, x| [y, x-1] }, :W]
+              ]
+    else
+      moves = [
+               [piece.positions.map { |y, x| [y+1, x] }, :S],
+               [piece.positions.map { |y, x| [y-1, x] }, :N],
+               [piece.positions.map { |y, x| [y, x-1] }, :W],
+               [piece.positions.map { |y, x| [y, x+1] }, :E]
+              ]
+    end
+    moves.map { |moved_piece, direction|
+      new_board = copy(direction: direction)
+      new_board.lift(piece)
+      if new_board.valid?(moved_piece)
+        new_board.place(moved_piece, identity: piece.identity)
         new_board
       else
         nil
@@ -154,9 +160,9 @@ class Solver
     }
   end
 
-  def copy
+  def copy(direction:)
     # TODO: find a more efficient deep copy to put here.
     # might even just be able to do @board.map()
-    Solver.new(Marshal.load(Marshal.dump(@board)))
+    Solver.new(Board.new(Marshal.load(Marshal.dump(@board)), direction))
   end
 end
