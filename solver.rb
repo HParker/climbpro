@@ -1,6 +1,8 @@
 require 'colorize'
 require 'pry'
 
+SPACE = "0".ord
+
 class Solver
 
   Piece = Struct.new(:identity, :positions)
