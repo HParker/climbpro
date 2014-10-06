@@ -1,6 +1,7 @@
 require_relative 'database'
 require_relative 'solver'
 require 'benchmark'
+require 'ruby-prof'
 
 COLORS = {
   'A' => :red,     'I' => :red,
@@ -29,6 +30,7 @@ CLIMB_10 = [
            ].map { |array| array.map(&:ord) }.freeze
 
 CLIMB_12 = [
+            %w(# # # # # # #),
            %w(# # # 0 # # #),
            %w(# A 0 0 0 B #),
            %w(# A C C D B #),
@@ -39,6 +41,7 @@ CLIMB_12 = [
            ].map { |array| array.map(&:ord) }.freeze
 
 CLIMB_24 = [
+         %w(# # # # # # # # #),
          %w(# # # # 0 # # # #),
          %w(# A A 0 0 0 B B #),
          %w(# C C D D D E E #),
@@ -60,21 +63,22 @@ CLIMB_24 = [
 # TODO: celluloid and ruby with native threads.
 # local db buffer to prevent asking mongo for stuff so much
 
-Board.destroy_all
-Board.create(contents: CLIMB_24)
+# require 'celluloid/autostart'
+
+
+db = Database.new
+db.destroy_all
+db.build(Board.new(board: CLIMB_10))
 
 puts Benchmark.measure {
-  10_000.times do |i|
-    b = Board.next
+  while !db.on_level?(20)
+    b = db.next
     solver = Solver.new(b, colors: COLORS)
-
-    puts "Expanding:"
-    solver.pretty_print
-
     expanded_boards = solver.next_boards
-
-    expanded_boards.each do |nb|
-      Board.build(b, nb)
-    end
+    db.builder(expanded_boards)
   end
-end
+}
+
+# Print a graph profile to text
+printer = RubyProf::GraphPrinter.new(result)
+printer.print(STDOUT, {})

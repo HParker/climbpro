@@ -4,20 +4,20 @@ require 'pry'
 SPACE = "0".ord
 
 class Solver
+  # include Celluloid
 
   Piece = Struct.new(:identity, :positions)
-  Board = Struct.new(:board, :direction)
 
-  attr_accessor :board, :direction
+  attr_accessor :board, :parent
 
   SPACE = "0".ord
   IMOVABLES = ["#".ord,"0".ord]
 
   def initialize(parent, colors: nil)
+    @parent = parent
     @board = parent.board
-    @parent_direction = parent.direction
-    @height = parent.board.size
-    @width = parent.board[0].size
+    @height = @board.size
+    @width = @board[0].size
     @colors = colors
   end
 
@@ -41,19 +41,17 @@ class Solver
 
   def next_boards
     pieces = whole_pieces(pieces_that_might_move(find_spaces))
-    pieces.map { |piece| try_move(piece) }.flatten.compact
+    pieces.map { |piece| try_move(piece) }.flatten.compact.map(&:parent)
   end
 
   def place(piece, identity:)
     piece.each do |y, x|
       @board[y][x] = identity
     end
-    @direction = direction
   end
 
   def valid?(new_positions)
     collisions = new_positions.select { |y, x|
-      return false if y > @height-1 || x > @width-1 # TODO: might not be needed with explicit boundries
       @board[y][x] != SPACE
     }
     collisions.empty?
@@ -117,41 +115,14 @@ class Solver
   end
 
   def try_move(piece)
-    case @parent_direction
-    when :N
-      moves = [
-               [piece.positions.map { |y, x| [y-1, x] }, :N],
-               [piece.positions.map { |y, x| [y, x-1] }, :W],
-               [piece.positions.map { |y, x| [y, x+1] }, :E]
-              ]
-    when :S
-      moves = [
-               [piece.positions.map { |y, x| [y+1, x] }, :S],
-               [piece.positions.map { |y, x| [y, x-1] }, :W],
-               [piece.positions.map { |y, x| [y, x+1] }, :E]
-              ]
-    when :E
-      moves = [
-               [piece.positions.map { |y, x| [y+1, x] }, :S],
-               [piece.positions.map { |y, x| [y-1, x] }, :N],
-               [piece.positions.map { |y, x| [y, x+1] }, :E]
-              ]
-    when :W
-      moves = [
-               [piece.positions.map { |y, x| [y+1, x] }, :S],
-               [piece.positions.map { |y, x| [y-1, x] }, :N],
-               [piece.positions.map { |y, x| [y, x-1] }, :W]
-              ]
-    else
-      moves = [
-               [piece.positions.map { |y, x| [y+1, x] }, :S],
-               [piece.positions.map { |y, x| [y-1, x] }, :N],
-               [piece.positions.map { |y, x| [y, x-1] }, :W],
-               [piece.positions.map { |y, x| [y, x+1] }, :E]
-              ]
-    end
-    moves.map { |moved_piece, direction|
-      new_board = copy(direction: direction)
+    moves = [
+             piece.positions.map { |y, x| [y+1, x] },
+             piece.positions.map { |y, x| [y-1, x] },
+             piece.positions.map { |y, x| [y, x-1] },
+             piece.positions.map { |y, x| [y, x+1] }
+            ]
+    moves.map { |moved_piece|
+      new_board = copy
       new_board.lift(piece)
       if new_board.valid?(moved_piece)
         new_board.place(moved_piece, identity: piece.identity)
@@ -162,9 +133,11 @@ class Solver
     }
   end
 
-  def copy(direction:)
+  def copy
     # TODO: find a more efficient deep copy to put here.
     # might even just be able to do @board.map()
-    Solver.new(Board.new(Marshal.load(Marshal.dump(@board)), direction))
+    Solver.new(Board.new(board: Marshal.load(Marshal.dump(@board)),
+                         moves: @parent.moves + 1,
+                         parent_id: @board.join))
   end
 end
