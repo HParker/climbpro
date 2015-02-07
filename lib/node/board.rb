@@ -5,6 +5,8 @@ class Board
 
   def initialize(rows)
     @rows = rows
+
+
     @height = rows.size
     @width = rows[0].size
   end

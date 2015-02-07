@@ -1,11 +1,53 @@
+# require 'redis'
+require 'json'
+require 'celluloid/autostart'
 require_relative 'constants'
 require_relative 'board'
+require 'dcell'
+require 'celluloid/redis'
+
+DCell.start
 
 class Buffer
-  def self.get
-    Board.new(Constants::CLIMB_10)
+  include Celluloid
+
+  def initialize
+    @redis = ::Redis.new(:driver => :celluloid)
+    @database_node = DCell::Node["database"]
+    @database = @database_node[:database]
+  end
+
+  def insert(board)
+    @redis.sadd("climbpro", board.to_json)
+  end
+
+  def keep_full
+    loop do
+      if @redis.scard("climbpro").to_i < 100
+        insert(@database.get)
+      end
+    end
+  end
+
+  def get
+    # insert(@database.get)
+    until @redis.scard("climbpro").to_i >= 1; puts @redis.scard("climbpro"); sleep 0.5; end
+    Board.new(JSON.parse(@redis.spop("climbpro")))
+  end
+
+  def buffer_out(boards)
+    boards.each do |board|
+
+    end
+  end
+
+  private
+
+  def near_empty
+    true
   end
 end
+
 
 =begin
 require 'redis'

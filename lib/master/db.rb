@@ -1,32 +1,48 @@
+require 'json'
+require 'celluloid/autostart'
 require 'mongoid'
+require 'dcell'
 
+require_relative '../node/board'
+
+DCell.start :id => "database"
 Mongoid.load!("db/mongoid.yml", :development)
 
 class DB
   include Mongoid::Document
+  include Celluloid
+  # belongs_to :parent, class_name: "Board", inverse_of: :children
+  # has_many :children, class_name: "Board", inverse_of: :parent
 
-  belongs_to :parent, class_name: "Board", inverse_of: :children
-  has_many :children, class_name: "Board", inverse_of: :parent
+  field :content
+  # field :expanded, type: Boolean, default: false
+  # field :created_at, type: Time
 
-  field :contents
-  field :expanded, type: Boolean, default: false
-  field :created_at, type: Time
+  # field :_id, default: ->{ content.join('') } # simple for now
 
-  field :_id, default: ->{ contents.join('') } # simple for now
-
-  def self.build parent, child
-    # TODO: just put the id there, we already know it.
-    parent = Board.find(parent.join('')) rescue nil
-    Board.create(parent: parent, contents: child, created_at: Time.now) rescue nil
+  def write(board)
+    DB.create(:content => board.rows.to_json)
   end
 
-  def self.next
-    Board.where(expanded: false).asc(:create_at).first.contents
-  end
-
-  def self.finish board
-    b = Board.find(board.join(''))
-    b.expanded = true
-    b.save
+  def get
+    puts "hey there"
+    JSON.parse(DB.first.content)
+    # dirty hackz
   end
 end
+
+DB.destroy_all
+DB.new.write(
+             Board.new([%w(# # # # # #),
+              %w(# # 0 0 # #),
+              %w(# A 0 0 C #),
+              %w(# A A B C #),
+              %w(# D U U E #),
+              %w(# H U U F #),
+              %w(# H G F F #),
+              %w(# # # # # #)])
+             )
+
+DB.supervise_as :database
+puts "Ready!"
+sleep
