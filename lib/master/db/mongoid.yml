@@ -1,0 +1,6 @@
+development:
+  sessions:
+    default:
+      database: climbpro
+      hosts:
+        - localhost:27017
