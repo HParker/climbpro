@@ -6,7 +6,7 @@
 // climb 12
 extern crate rayon;
 use rayon::prelude::*;
-use std::time::{Duration, Instant};
+use std::time::{Instant};
 
 type Shape = [[bool; 3]; 3];
 
@@ -131,7 +131,7 @@ fn show(board: &Board) {
     }
 }
 
-fn valid(board: Board) -> bool {
+fn valid(board: &Board) -> bool {
     let mut area: [[bool; 5]; 6] = [[false; 5]; 6];
     let mut count = 0;
     for piece in board.pieces.iter() {
@@ -175,19 +175,18 @@ fn movements(piece: &Piece) -> Vec<Piece> {
     new_pieces
 }
 
-fn replace(new_piece: Piece, location: usize, board: Board) -> Board {
-    let mut new_board = board;
-    new_board.pieces[location] = new_piece;
-    new_board
+fn replace(new_piece: Piece, location: usize, board: &mut Board) {
+    board.pieces[location] = new_piece;
 }
 
-fn potential_boards(board: Board) -> Vec<Board> {
+fn potential_boards(board: &Board) -> Vec<Board> {
     let mut potentials: Vec<Board> = vec!();
     for (i, piece) in board.pieces.iter().enumerate().filter(|p| p.1.movable) {
         for moved_piece in movements(piece) {
-            let new_board: Board = replace(moved_piece, i, board.clone());
-            if valid(new_board.clone()) {
-                potentials.push(new_board.clone());
+            let mut new_board: Board = board.clone();
+            replace(moved_piece, i, &mut new_board);
+            if valid(&new_board) {
+                potentials.push(new_board);
             }
 
         }
@@ -195,9 +194,9 @@ fn potential_boards(board: Board) -> Vec<Board> {
     potentials
 }
 
-fn expand_layer(boards: Vec<Board>, previous: Vec<Vec<Board>>) -> Vec<Board> {
+fn expand_layer(boards: &Vec<Board>, previous: &Vec<Vec<Board>>) -> Vec<Board> {
     let mut potentials: Vec<Board> = vec!();
-    let mut pboards: Vec<Vec<Board>> = boards.par_iter().map(|board| potential_boards(board.clone())).collect();
+    let pboards: Vec<Vec<Board>> = boards.par_iter().map(|board| potential_boards(board)).collect();
 
     for mut boards in pboards {
         boards.retain(|b| (previous.iter().find(|pb| pb.contains(&b)).is_none()));
@@ -209,12 +208,12 @@ fn expand_layer(boards: Vec<Board>, previous: Vec<Vec<Board>>) -> Vec<Board> {
 fn main() {
     let now = Instant::now();
     let mut layer: Vec<Board> = vec!(initial_board());
-    let mut layers: Vec<Vec<Board>> = vec!(layer.clone());
+    let mut layers: Vec<Vec<Board>> = Vec::new();
     loop {
-        layer = expand_layer(layer.clone(), layers.clone());
+        layer = expand_layer(&layer, &layers);
 
-        layers.push(layer.clone());
         println!("layer {} size: {} | {} s", layers.len(), layer.len(), now.elapsed().as_secs());
+        layers.push(layer.clone());
     }
 
 }
