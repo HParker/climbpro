@@ -4,4 +4,4 @@ version = "0.1.0"
 authors = ["Adam Hess <adamhess1991@gmail.com>"]
 
 [dependencies]
-rayon = "0.8.1"
+clippy = {version = "*", optional = true}

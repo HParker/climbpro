@@ -1,12 +1,9 @@
-// IDEA:
-// What about a piece struct like
-// struct Piece { offset: (usize, usize), shape: [[i8; 3]; 3]}
-// that way we can bitmash them together to see if they are overlapping.
+#![cfg_attr(feature="clippy", feature(plugin))]
 
-// climb 12
-extern crate rayon;
-use rayon::prelude::*;
+#![cfg_attr(feature="clippy", plugin(clippy))]
 use std::time::{Instant};
+
+
 
 type Shape = [[bool; 3]; 3];
 
@@ -127,31 +124,9 @@ fn show(board: &Board) {
         for cell in row {
             print!(" {} ", cell);
         }
-        print!("\n\n");
+        println!();
+        println!();
     }
-}
-
-fn valid(board: &Board) -> bool {
-    let mut area: [[bool; 5]; 6] = [[false; 5]; 6];
-    let mut count = 0;
-    for piece in board.pieces.iter() {
-        for (y, row) in piece.shape.iter().enumerate() {
-            for (x, cell) in row.iter().enumerate() {
-                if *cell && inbounds(piece.origin, y, x) {
-                    if area[piece.origin.0 + y][piece.origin.1 + x] == false {
-                        count += 1;
-                        area[piece.origin.0 + y][piece.origin.1 + x] = true;
-                    } else {
-                        return false;
-                    }
-                }
-            }
-        }
-    }
-    if count == 26 {
-        return true;
-    }
-    return false;
 }
 
 fn inbounds(location: (usize, usize), y: usize, x: usize) -> bool {
@@ -179,28 +154,57 @@ fn replace(new_piece: Piece, location: usize, board: &mut Board) {
     board.pieces[location] = new_piece;
 }
 
+fn area_for(pieces: &[Piece], ignore_location: usize) -> [[bool; 5]; 6] {
+    let mut area: [[bool; 5]; 6] = [[false; 5]; 6];
+    for (i, piece) in pieces.iter().enumerate() {
+        if i == ignore_location {
+            continue;
+        }
+        for (y, row) in piece.shape.iter().enumerate() {
+            for (x, cell) in row.iter().enumerate() {
+                if *cell && inbounds(piece.origin, y, x) {
+                    area[piece.origin.0 + y][piece.origin.1 + x] = true;
+                }
+            }
+        }
+    }
+    area
+}
+
+fn valid(piece: &Piece, area: &[[bool; 5]; 6]) -> bool {
+    for (y, row) in piece.shape.iter().enumerate() {
+        for (x, cell) in row.iter().enumerate() {
+            if *cell && (!inbounds(piece.origin, y, x) || area[piece.origin.0 + y][piece.origin.1 + x]) {
+                // println!("disqualified due to out of bounds");
+                return false;
+            }
+        }
+    }
+    true
+}
+
 fn potential_boards(board: &Board) -> Vec<Board> {
     let mut potentials: Vec<Board> = vec!();
     for (i, piece) in board.pieces.iter().enumerate().filter(|p| p.1.movable) {
+        let area: [[bool; 5]; 6] = area_for(&board.pieces, i);
         for moved_piece in movements(piece) {
-            let mut new_board: Board = board.clone();
-            replace(moved_piece, i, &mut new_board);
-            if valid(&new_board) {
+            if valid(&moved_piece, &area) {
+                let mut new_board: Board = board.clone();
+                replace(moved_piece, i, &mut new_board);
                 potentials.push(new_board);
             }
-
         }
     }
     potentials
 }
 
-fn expand_layer(boards: &Vec<Board>, previous: &Vec<Vec<Board>>) -> Vec<Board> {
+fn expand_layer(boards: &[Board], previous: &[Vec<Board>]) -> Vec<Board> {
     let mut potentials: Vec<Board> = vec!();
-    let pboards: Vec<Vec<Board>> = boards.par_iter().map(|board| potential_boards(board)).collect();
+    let pboards: Vec<Vec<Board>> = boards.iter().map(|board| potential_boards(board)).collect();
 
     for mut boards in pboards {
-        boards.retain(|b| (previous.iter().find(|pb| pb.contains(&b)).is_none()));
-        potentials.append(&mut boards)
+        boards.retain(|b| (previous.iter().find(|pb| pb.contains(b)).is_none()));
+        potentials.append(&mut boards);
     }
     potentials
 }
@@ -208,12 +212,16 @@ fn expand_layer(boards: &Vec<Board>, previous: &Vec<Vec<Board>>) -> Vec<Board> {
 fn main() {
     let now = Instant::now();
     let mut layer: Vec<Board> = vec!(initial_board());
-    let mut layers: Vec<Vec<Board>> = Vec::new();
+    let mut layers: Vec<Vec<Board>> = vec!(layer.clone());
+    let mut counter: usize = 0;
     loop {
         layer = expand_layer(&layer, &layers);
-
+        // for board in &layer { show(&board); }
         println!("layer {} size: {} | {} s", layers.len(), layer.len(), now.elapsed().as_secs());
         layers.push(layer.clone());
+        counter += 1;
+        if counter > 10 {
+            break;
+        }
     }
-
 }
