@@ -4,8 +4,13 @@
 use std::time::{Instant};
 
 
+#[derive(Clone)]
+struct Shape {
+    collider: [[bool; 3]; 3],
+    height: usize,
+    width: usize
+}
 
-type Shape = [[bool; 3]; 3];
 
 #[derive(Clone)]
 struct Piece {
@@ -14,41 +19,53 @@ struct Piece {
     movable: bool
 }
 
-const DOT: Shape = [
-    [true, false, false],
-    [false, false, false],
-    [false, false, false]
-];
+const DOT: Shape = Shape {
+    collider: [[true, false, false],
+               [false, false, false],
+               [false, false, false]],
+    height: 1,
+    width: 1
+};
 
-const VTWO: Shape = [
-    [true, false, false],
-    [true, false, false],
-    [false, false, false]
-];
+const VTWO: Shape = Shape {
+    collider: [[true, false, false],
+               [true, false, false],
+               [false, false, false]],
+    height: 2,
+    width: 1
+};
 
-const FTWO: Shape = [
-    [true, true, false],
-    [false, false, false],
-    [false, false, false]
-];
+const FTWO: Shape = Shape {
+    collider: [[true, true, false],
+               [false, false, false],
+               [false, false, false]],
+    height: 1,
+    width: 2
+};
 
-const GOAL: Shape = [
-    [false, true, false],
-    [true, true, true],
-    [false, false, false]
-];
+const GOAL: Shape = Shape {
+    collider: [[false, true, false],
+               [true, true, true],
+               [false, false, false]],
+    height: 2,
+    width: 3
+};
 
-const LEFT: Shape = [
-    [true, true, false],
-    [true, false, false],
-    [false, false, false]
-];
+const LEFT: Shape = Shape {
+    collider: [[true, true, false],
+               [true, false, false],
+               [false, false, false]],
+    height: 2,
+    width: 2
+};
 
-const RIGHT: Shape = [
-    [false, true, false],
-    [true, true, false],
-    [false, false, false]
-];
+const RIGHT: Shape = Shape {
+    collider: [[false, true, false],
+               [true, true, false],
+               [false, false, false]],
+    height: 2,
+    width: 2
+};
 
 #[derive(Clone)]
 struct Board {
@@ -70,29 +87,27 @@ impl PartialEq for Board {
 
 fn initial_board() -> Board {
     Board { pieces: vec!(
-              Piece { origin: (0,0), shape: FTWO, movable: false }, // top bar
-              Piece { origin: (0,3), shape: FTWO, movable: false }, // top bar
-              Piece { origin: (1,0), shape: VTWO, movable: true },
-              Piece { origin: (1,4), shape: VTWO, movable: true },
-              Piece { origin: (4,1), shape: GOAL, movable: true },
-              Piece { origin: (2,1), shape: LEFT, movable: true },
-              Piece { origin: (2,2), shape: RIGHT, movable: true },
-              Piece { origin: (3,0), shape: DOT, movable: true },
-              Piece { origin: (3,4), shape: DOT, movable: true },
-              Piece { origin: (5,0), shape: DOT, movable: true },
-              Piece { origin: (5,4), shape: DOT, movable: true },
-              Piece { origin: (4,0), shape: FTWO, movable: true },
-              Piece { origin: (4,3), shape: FTWO, movable: true }),
+        Piece { origin: (1,0), shape: VTWO,  movable: true },
+        Piece { origin: (1,4), shape: VTWO,  movable: true },
+        Piece { origin: (4,1), shape: GOAL,  movable: true },
+        Piece { origin: (2,1), shape: LEFT,  movable: true },
+        Piece { origin: (2,2), shape: RIGHT, movable: true },
+        Piece { origin: (3,0), shape: DOT,   movable: true },
+        Piece { origin: (3,4), shape: DOT,   movable: true },
+        Piece { origin: (5,0), shape: DOT,   movable: true },
+        Piece { origin: (5,4), shape: DOT,   movable: true },
+        Piece { origin: (4,0), shape: FTWO,  movable: true },
+        Piece { origin: (4,3), shape: FTWO,  movable: true },
+        Piece { origin: (0,0), shape: FTWO,  movable: false },
+        Piece { origin: (0,3), shape: FTWO,  movable: false },
+    ),
             height: 6,
             width: 5
     }
 }
 
-
 fn show(board: &Board) {
     let emoji = [
-        "⬛",
-        "⬛",
         "🍺",
         "🔴",
         "😍",
@@ -103,14 +118,16 @@ fn show(board: &Board) {
         "♥",
         "🤡",
         "☂",
-        "😹"
+        "😹",
+        "⬛",
+        "⬛",
     ];
 
     let mut drawing: [[&str; 5]; 6] = [["⬜"; 5]; 6];
 
     for (pid, piece) in board.pieces.iter().enumerate() {
         println!("id: {} {} ({}, {}) mov: {}", pid, emoji[pid], piece.origin.0, piece.origin.1, piece.movable);
-        for (y, row) in piece.shape.iter().enumerate() {
+        for (y, row) in piece.shape.collider.iter().enumerate() {
             for (x, cell) in row.iter().enumerate() {
                 if cell == &true {
                     drawing[piece.origin.0 + y][piece.origin.1 + x] = emoji[pid]
@@ -135,17 +152,17 @@ fn inbounds(location: (usize, usize), y: usize, x: usize) -> bool {
 
 fn movements(piece: &Piece) -> Vec<Piece> {
     let mut new_pieces = vec!();
-    if piece.origin.0 < 4 {
-        new_pieces.push(Piece { origin: (piece.origin.0 + 1, piece.origin.1), shape: piece.shape, movable: true })
+    if piece.origin.0 + piece.shape.height < 6 {
+        new_pieces.push(Piece { origin: (piece.origin.0 + 1, piece.origin.1), shape: piece.shape.clone(), movable: true })
     }
-    if piece.origin.1 < 3 {
-        new_pieces.push(Piece { origin: (piece.origin.0, piece.origin.1 + 1), shape: piece.shape, movable: true })
+    if piece.origin.1 + piece.shape.width < 5 {
+        new_pieces.push(Piece { origin: (piece.origin.0, piece.origin.1 + 1), shape: piece.shape.clone(), movable: true })
     }
     if piece.origin.0 > 1 {
-        new_pieces.push(Piece { origin: (piece.origin.0 - 1, piece.origin.1), shape: piece.shape, movable: true })
+        new_pieces.push(Piece { origin: (piece.origin.0 - 1, piece.origin.1), shape: piece.shape.clone(), movable: true })
     }
     if piece.origin.1 > 1 {
-        new_pieces.push(Piece { origin: (piece.origin.0, piece.origin.1 - 1), shape: piece.shape, movable: true })
+        new_pieces.push(Piece { origin: (piece.origin.0, piece.origin.1 - 1), shape: piece.shape.clone(), movable: true })
     }
     new_pieces
 }
@@ -160,7 +177,7 @@ fn area_for(pieces: &[Piece], ignore_location: usize) -> [[bool; 5]; 6] {
         if i == ignore_location {
             continue;
         }
-        for (y, row) in piece.shape.iter().enumerate() {
+        for (y, row) in piece.shape.collider.iter().enumerate() {
             for (x, cell) in row.iter().enumerate() {
                 if *cell && inbounds(piece.origin, y, x) {
                     area[piece.origin.0 + y][piece.origin.1 + x] = true;
@@ -172,10 +189,9 @@ fn area_for(pieces: &[Piece], ignore_location: usize) -> [[bool; 5]; 6] {
 }
 
 fn valid(piece: &Piece, area: &[[bool; 5]; 6]) -> bool {
-    for (y, row) in piece.shape.iter().enumerate() {
+    for (y, row) in piece.shape.collider.iter().enumerate() {
         for (x, cell) in row.iter().enumerate() {
-            if *cell && (!inbounds(piece.origin, y, x) || area[piece.origin.0 + y][piece.origin.1 + x]) {
-                // println!("disqualified due to out of bounds");
+            if *cell && area[piece.origin.0 + y][piece.origin.1 + x] {
                 return false;
             }
         }
@@ -220,7 +236,7 @@ fn main() {
         println!("layer {} size: {} | {} s", layers.len(), layer.len(), now.elapsed().as_secs());
         layers.push(layer.clone());
         counter += 1;
-        if counter > 10 {
+        if counter > 20 {
             break;
         }
     }
