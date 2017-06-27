@@ -1,8 +1,7 @@
 #![cfg_attr(feature="clippy", feature(plugin))]
-
 #![cfg_attr(feature="clippy", plugin(clippy))]
-use std::time::{Instant};
 
+use std::time::{Instant};
 
 #[derive(Clone)]
 struct Shape {
@@ -15,11 +14,11 @@ struct Shape {
 #[derive(Clone)]
 struct Piece {
     origin: (usize, usize),
-    shape: Shape,
+    shape: &'static Shape,
     movable: bool
 }
 
-const DOT: Shape = Shape {
+static DOT: Shape = Shape {
     collider: [[true, false, false],
                [false, false, false],
                [false, false, false]],
@@ -27,7 +26,7 @@ const DOT: Shape = Shape {
     width: 1
 };
 
-const VTWO: Shape = Shape {
+static VTWO: Shape = Shape {
     collider: [[true, false, false],
                [true, false, false],
                [false, false, false]],
@@ -35,7 +34,7 @@ const VTWO: Shape = Shape {
     width: 1
 };
 
-const FTWO: Shape = Shape {
+static FTWO: Shape = Shape {
     collider: [[true, true, false],
                [false, false, false],
                [false, false, false]],
@@ -43,7 +42,7 @@ const FTWO: Shape = Shape {
     width: 2
 };
 
-const GOAL: Shape = Shape {
+static GOAL: Shape = Shape {
     collider: [[false, true, false],
                [true, true, true],
                [false, false, false]],
@@ -51,7 +50,7 @@ const GOAL: Shape = Shape {
     width: 3
 };
 
-const LEFT: Shape = Shape {
+static LEFT: Shape = Shape {
     collider: [[true, true, false],
                [true, false, false],
                [false, false, false]],
@@ -59,7 +58,7 @@ const LEFT: Shape = Shape {
     width: 2
 };
 
-const RIGHT: Shape = Shape {
+static RIGHT: Shape = Shape {
     collider: [[false, true, false],
                [true, true, false],
                [false, false, false]],
@@ -87,19 +86,19 @@ impl PartialEq for Board {
 
 fn initial_board() -> Board {
     Board { pieces: vec!(
-        Piece { origin: (1,0), shape: VTWO,  movable: true },
-        Piece { origin: (1,4), shape: VTWO,  movable: true },
-        Piece { origin: (4,1), shape: GOAL,  movable: true },
-        Piece { origin: (2,1), shape: LEFT,  movable: true },
-        Piece { origin: (2,2), shape: RIGHT, movable: true },
-        Piece { origin: (3,0), shape: DOT,   movable: true },
-        Piece { origin: (3,4), shape: DOT,   movable: true },
-        Piece { origin: (5,0), shape: DOT,   movable: true },
-        Piece { origin: (5,4), shape: DOT,   movable: true },
-        Piece { origin: (4,0), shape: FTWO,  movable: true },
-        Piece { origin: (4,3), shape: FTWO,  movable: true },
-        Piece { origin: (0,0), shape: FTWO,  movable: false },
-        Piece { origin: (0,3), shape: FTWO,  movable: false },
+        Piece { origin: (1,0), shape: &VTWO,  movable: true },
+        Piece { origin: (1,4), shape: &VTWO,  movable: true },
+        Piece { origin: (4,1), shape: &GOAL,  movable: true },
+        Piece { origin: (2,1), shape: &LEFT,  movable: true },
+        Piece { origin: (2,2), shape: &RIGHT, movable: true },
+        Piece { origin: (3,0), shape: &DOT,   movable: true },
+        Piece { origin: (3,4), shape: &DOT,   movable: true },
+        Piece { origin: (5,0), shape: &DOT,   movable: true },
+        Piece { origin: (5,4), shape: &DOT,   movable: true },
+        Piece { origin: (4,0), shape: &FTWO,  movable: true },
+        Piece { origin: (4,3), shape: &FTWO,  movable: true },
+        Piece { origin: (0,0), shape: &FTWO,  movable: false },
+        Piece { origin: (0,3), shape: &FTWO,  movable: false },
     ),
             height: 6,
             width: 5
@@ -146,23 +145,19 @@ fn show(board: &Board) {
     }
 }
 
-fn inbounds(location: (usize, usize), y: usize, x: usize) -> bool {
-    location.0 + y < 6 && location.1 + x < 5
-}
-
 fn movements(piece: &Piece) -> Vec<Piece> {
     let mut new_pieces = vec!();
     if piece.origin.0 + piece.shape.height < 6 {
-        new_pieces.push(Piece { origin: (piece.origin.0 + 1, piece.origin.1), shape: piece.shape.clone(), movable: true })
+        new_pieces.push(Piece { origin: (piece.origin.0 + 1, piece.origin.1), shape: piece.shape, movable: true })
     }
     if piece.origin.1 + piece.shape.width < 5 {
-        new_pieces.push(Piece { origin: (piece.origin.0, piece.origin.1 + 1), shape: piece.shape.clone(), movable: true })
+        new_pieces.push(Piece { origin: (piece.origin.0, piece.origin.1 + 1), shape: piece.shape, movable: true })
     }
     if piece.origin.0 > 1 {
-        new_pieces.push(Piece { origin: (piece.origin.0 - 1, piece.origin.1), shape: piece.shape.clone(), movable: true })
+        new_pieces.push(Piece { origin: (piece.origin.0 - 1, piece.origin.1), shape: piece.shape, movable: true })
     }
     if piece.origin.1 > 1 {
-        new_pieces.push(Piece { origin: (piece.origin.0, piece.origin.1 - 1), shape: piece.shape.clone(), movable: true })
+        new_pieces.push(Piece { origin: (piece.origin.0, piece.origin.1 - 1), shape: piece.shape, movable: true })
     }
     new_pieces
 }
@@ -179,7 +174,7 @@ fn area_for(pieces: &[Piece], ignore_location: usize) -> [[bool; 5]; 6] {
         }
         for (y, row) in piece.shape.collider.iter().enumerate() {
             for (x, cell) in row.iter().enumerate() {
-                if *cell && inbounds(piece.origin, y, x) {
+                if *cell {
                     area[piece.origin.0 + y][piece.origin.1 + x] = true;
                 }
             }
@@ -225,6 +220,10 @@ fn expand_layer(boards: &[Board], previous: &[Vec<Board>]) -> Vec<Board> {
     potentials
 }
 
+fn goal(board: &Board) -> bool {
+    board.pieces[2].origin.0 == 0
+}
+
 fn main() {
     let now = Instant::now();
     let mut layer: Vec<Board> = vec!(initial_board());
@@ -232,12 +231,20 @@ fn main() {
     let mut counter: usize = 0;
     loop {
         layer = expand_layer(&layer, &layers);
+        match layer.iter().find(|b| goal(b)) {
+            Some(b) => {
+                println!("found the goal!");
+                show(&b);
+                break;
+            }
+            None => {
+
+            }
+        }
+
         // for board in &layer { show(&board); }
-        println!("layer {} size: {} | {} s", layers.len(), layer.len(), now.elapsed().as_secs());
+        println!("layer {} size: {} | {} s", counter, layer.len(), now.elapsed().as_secs());
         layers.push(layer.clone());
         counter += 1;
-        if counter > 20 {
-            break;
-        }
     }
 }
