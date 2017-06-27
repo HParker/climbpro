@@ -153,10 +153,10 @@ fn movements(piece: &Piece) -> Vec<Piece> {
     if piece.origin.1 + piece.shape.width < 5 {
         new_pieces.push(Piece { origin: (piece.origin.0, piece.origin.1 + 1), shape: piece.shape, movable: true })
     }
-    if piece.origin.0 > 1 {
+    if piece.origin.0 > 0 {
         new_pieces.push(Piece { origin: (piece.origin.0 - 1, piece.origin.1), shape: piece.shape, movable: true })
     }
-    if piece.origin.1 > 1 {
+    if piece.origin.1 > 0 {
         new_pieces.push(Piece { origin: (piece.origin.0, piece.origin.1 - 1), shape: piece.shape, movable: true })
     }
     new_pieces
