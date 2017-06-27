@@ -2,6 +2,8 @@
 #![cfg_attr(feature="clippy", plugin(clippy))]
 
 use std::time::{Instant};
+use std::collections::HashSet;
+use std::hash::{Hash,Hasher};
 
 #[derive(Clone)]
 struct Shape {
@@ -17,6 +19,36 @@ struct Piece {
     shape: &'static Shape,
     movable: bool
 }
+
+#[derive(Clone)]
+struct Board {
+    pieces: Vec<Piece>,
+    height: i8,
+    width: i8
+}
+
+impl Hash for Board {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        for (i, piece) in self.pieces.iter().enumerate() {
+            piece.origin.0.hash(state);
+            piece.origin.1.hash(state);
+            i.hash(state);
+        }
+    }
+}
+
+impl PartialEq for Board {
+    fn eq(&self, other: &Board) -> bool {
+        for (piece, other_piece) in self.pieces.iter().zip(other.pieces.iter()) {
+            if piece.origin != other_piece.origin {
+                return false;
+            }
+        }
+        true
+    }
+}
+impl Eq for Board {}
+
 
 static DOT: Shape = Shape {
     collider: [[true, false, false],
@@ -65,24 +97,6 @@ static RIGHT: Shape = Shape {
     height: 2,
     width: 2
 };
-
-#[derive(Clone)]
-struct Board {
-    pieces: Vec<Piece>,
-    height: i8,
-    width: i8
-}
-
-impl PartialEq for Board {
-    fn eq(&self, other: &Board) -> bool {
-        for (piece, other_piece) in self.pieces.iter().zip(other.pieces.iter()) {
-            if piece.origin != other_piece.origin {
-                return false;
-            }
-        }
-        true
-    }
-}
 
 fn initial_board() -> Board {
     Board { pieces: vec!(
@@ -209,12 +223,13 @@ fn potential_boards(board: &Board) -> Vec<Board> {
     potentials
 }
 
-fn expand_layer(boards: &[Board], previous: &[Vec<Board>]) -> Vec<Board> {
+fn expand_layer(boards: &[Board], seen_boards: &HashSet<Board>) -> Vec<Board> {
     let mut potentials: Vec<Board> = vec!();
     let pboards: Vec<Vec<Board>> = boards.iter().map(|board| potential_boards(board)).collect();
 
     for mut boards in pboards {
-        boards.retain(|b| (previous.iter().find(|pb| pb.contains(b)).is_none()));
+        // boards.retain(|b| (previous.iter().find(|pb| pb.contains(b)).is_none()));
+        boards.retain(|b| !seen_boards.contains(b));
         potentials.append(&mut boards);
     }
     potentials
@@ -227,10 +242,10 @@ fn goal(board: &Board) -> bool {
 fn main() {
     let now = Instant::now();
     let mut layer: Vec<Board> = vec!(initial_board());
-    let mut layers: Vec<Vec<Board>> = vec!(layer.clone());
+    let mut seen_boards: HashSet<Board> = HashSet::new();
     let mut counter: usize = 0;
-    loop {
-        layer = expand_layer(&layer, &layers);
+    while counter < 40 {
+        layer = expand_layer(&layer, &seen_boards);
         match layer.iter().find(|b| goal(b)) {
             Some(b) => {
                 println!("found the goal!");
@@ -238,13 +253,14 @@ fn main() {
                 break;
             }
             None => {
-
             }
         }
-
-        // for board in &layer { show(&board); }
+        // for board in layer.iter() { show(&board); }
         println!("layer {} size: {} | {} s", counter, layer.len(), now.elapsed().as_secs());
-        layers.push(layer.clone());
+
+        for board in layer.iter() {
+            seen_boards.insert(board.clone());
+        }
         counter += 1;
     }
 }
