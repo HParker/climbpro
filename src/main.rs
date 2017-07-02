@@ -5,13 +5,11 @@ use std::time::{Instant};
 use std::collections::HashSet;
 use std::hash::{Hash,Hasher};
 
-#[derive(Clone)]
 struct Shape {
-    collider: [[bool; 3]; 3],
+    collider: [u8; 3],
     height: usize,
     width: usize
 }
-
 
 #[derive(Clone)]
 struct Piece {
@@ -23,8 +21,8 @@ struct Piece {
 #[derive(Clone)]
 struct Board {
     pieces: Vec<Piece>,
-    height: i8,
-    width: i8
+    height: u8,
+    width: u8
 }
 
 impl Hash for Board {
@@ -51,49 +49,55 @@ impl Eq for Board {}
 
 
 static DOT: Shape = Shape {
-    collider: [[true, false, false],
-               [false, false, false],
-               [false, false, false]],
+    collider: [0b100, 0b000, 0b000],
+    // collider: [[true, false, false],
+    //            [false, false, false],
+    //            [false, false, false]],
     height: 1,
     width: 1
 };
 
 static VTWO: Shape = Shape {
-    collider: [[true, false, false],
-               [true, false, false],
-               [false, false, false]],
+    collider: [0b100, 0b100, 0b000],
+    // collider: [[true, false, false],
+    //            [true, false, false],
+    //            [false, false, false]],
     height: 2,
     width: 1
 };
 
 static FTWO: Shape = Shape {
-    collider: [[true, true, false],
-               [false, false, false],
-               [false, false, false]],
+    collider: [0b110, 0b000, 0b000],
+    // collider: [[true, true, false],
+    //            [false, false, false],
+    //            [false, false, false]],
     height: 1,
     width: 2
 };
 
 static GOAL: Shape = Shape {
-    collider: [[false, true, false],
-               [true, true, true],
-               [false, false, false]],
+    collider: [0b010, 0b111, 0b000],
+    // collider: [[false, true, false],
+    //            [true, true, true],
+    //            [false, false, false]],
     height: 2,
     width: 3
 };
 
 static LEFT: Shape = Shape {
-    collider: [[true, true, false],
-               [true, false, false],
-               [false, false, false]],
+    collider: [0b110, 0b100, 0b0],
+    // collider: [[true, true, false],
+    //            [true, false, false],
+    //            [false, false, false]],
     height: 2,
     width: 2
 };
 
 static RIGHT: Shape = Shape {
-    collider: [[false, true, false],
-               [true, true, false],
-               [false, false, false]],
+    collider: [0b010, 0b110, 0b000],
+    // collider: [[false, true, false],
+    //            [true, true, false],
+    //            [false, false, false]],
     height: 2,
     width: 2
 };
@@ -119,45 +123,46 @@ fn initial_board() -> Board {
     }
 }
 
-fn show(board: &Board) {
-    let emoji = [
-        "🍺",
-        "🔴",
-        "😍",
-        "🔵",
-        "💩",
-        "💬",
-        "⛩",
-        "♥",
-        "🤡",
-        "☂",
-        "😹",
-        "⬛",
-        "⬛",
-    ];
+// fn show(board: &Board) {
+//     let emoji = [
+//         "🍺",
+//         "🔴",
+//         "😍",
+//         "🔵",
+//         "💩",
+//         "💬",
+//         "⛩",
+//         "♥",
+//         "🤡",
+//         "☂",
+//         "😹",
+//         "⬛",
+//         "⬛",
+//     ];
 
-    let mut drawing: [[&str; 5]; 6] = [["⬜"; 5]; 6];
+//     let mut drawing: [[&str; 5]; 6] = [["⬜"; 5]; 6];
 
-    for (pid, piece) in board.pieces.iter().enumerate() {
-        println!("id: {} {} ({}, {}) mov: {}", pid, emoji[pid], piece.origin.0, piece.origin.1, piece.movable);
-        for (y, row) in piece.shape.collider.iter().enumerate() {
-            for (x, cell) in row.iter().enumerate() {
-                if cell == &true {
-                    drawing[piece.origin.0 + y][piece.origin.1 + x] = emoji[pid]
-                }
-            }
+//     for (pid, piece) in board.pieces.iter().enumerate() {
+//         println!("id: {} {} ({}, {}) mov: {}", pid, emoji[pid], piece.origin.0, piece.origin.1, piece.movable);
+//         for (y, row) in piece.shape.collider.iter().enumerate() {
 
-        }
-    }
+//             // for (x, cell) in row.iter().enumerate() {
+//             //     if cell == &true {
+//             //         drawing[piece.origin.0 + y][piece.origin.1 + x] = emoji[pid]
+//             //     }
+//             // }
 
-    for row in drawing.iter() {
-        for cell in row {
-            print!(" {} ", cell);
-        }
-        println!();
-        println!();
-    }
-}
+//         }
+//     }
+
+//     for row in drawing.iter() {
+//         for cell in row {
+//             print!(" {} ", cell);
+//         }
+//         println!();
+//         println!();
+//     }
+// }
 
 fn movements(piece: &Piece) -> Vec<Piece> {
     let mut new_pieces = vec!();
@@ -180,29 +185,41 @@ fn replace(new_piece: Piece, location: usize, board: &mut Board) {
     board.pieces[location] = new_piece;
 }
 
-fn area_for(pieces: &[Piece], ignore_location: usize) -> [[bool; 5]; 6] {
-    let mut area: [[bool; 5]; 6] = [[false; 5]; 6];
+fn show(pieces: &[Piece]) {
+    let mut area: [u8; 6] = [0b0; 6];
+    for (i, piece) in pieces.iter().enumerate() {
+        for (y, row) in piece.shape.collider.iter().enumerate() {
+            if piece.origin.0 + y < 6 {
+                area[piece.origin.0 + y] = area[piece.origin.0 + y] | (row << 4 - piece.origin.1);
+            }
+        }
+    }
+    println!("-------");
+    for row in area.iter() {
+        println!("{:#b}", row);
+    }
+    println!("-------");
+}
+
+fn area_for(pieces: &[Piece], ignore_location: usize) -> [u8; 6] {
+    let mut area: [u8; 6] = [0b0; 6];
     for (i, piece) in pieces.iter().enumerate() {
         if i == ignore_location {
             continue;
         }
         for (y, row) in piece.shape.collider.iter().enumerate() {
-            for (x, cell) in row.iter().enumerate() {
-                if *cell {
-                    area[piece.origin.0 + y][piece.origin.1 + x] = true;
-                }
+            if piece.origin.0 + y < 6 {
+                area[piece.origin.0 + y] = area[piece.origin.0 + y] | (row << 4 - piece.origin.1);
             }
         }
     }
     area
 }
 
-fn valid(piece: &Piece, area: &[[bool; 5]; 6]) -> bool {
+fn valid(piece: &Piece, area: &[u8; 6]) -> bool {
     for (y, row) in piece.shape.collider.iter().enumerate() {
-        for (x, cell) in row.iter().enumerate() {
-            if *cell && area[piece.origin.0 + y][piece.origin.1 + x] {
-                return false;
-            }
+        if row != &0b0 && ((area[piece.origin.0 + y] & (row << 4 - piece.origin.1)) != 0b0) {
+            return false;
         }
     }
     true
@@ -211,7 +228,7 @@ fn valid(piece: &Piece, area: &[[bool; 5]; 6]) -> bool {
 fn potential_boards(board: &Board) -> Vec<Board> {
     let mut potentials: Vec<Board> = vec!();
     for (i, piece) in board.pieces.iter().enumerate().filter(|p| p.1.movable) {
-        let area: [[bool; 5]; 6] = area_for(&board.pieces, i);
+        let area: [u8; 6] = area_for(&board.pieces, i);
         for moved_piece in movements(piece) {
             if valid(&moved_piece, &area) {
                 let mut new_board: Board = board.clone();
@@ -228,7 +245,6 @@ fn expand_layer(boards: &[Board], seen_boards: &HashSet<Board>) -> Vec<Board> {
     let pboards: Vec<Vec<Board>> = boards.iter().map(|board| potential_boards(board)).collect();
 
     for mut boards in pboards {
-        // boards.retain(|b| (previous.iter().find(|pb| pb.contains(b)).is_none()));
         boards.retain(|b| !seen_boards.contains(b));
         potentials.append(&mut boards);
     }
@@ -244,18 +260,17 @@ fn main() {
     let mut layer: Vec<Board> = vec!(initial_board());
     let mut seen_boards: HashSet<Board> = HashSet::new();
     let mut counter: usize = 0;
-    while counter < 40 {
+    while counter < 30 {
         layer = expand_layer(&layer, &seen_boards);
         match layer.iter().find(|b| goal(b)) {
-            Some(b) => {
+            Some(_b) => {
                 println!("found the goal!");
-                show(&b);
+                // TODO show path
                 break;
             }
             None => {
             }
         }
-        // for board in layer.iter() { show(&board); }
         println!("layer {} size: {} | {} s", counter, layer.len(), now.elapsed().as_secs());
 
         for board in layer.iter() {
