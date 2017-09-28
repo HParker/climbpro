@@ -50,69 +50,69 @@ impl Eq for Board {}
 
 static DOT: Shape = Shape {
     collider: [0b100, 0b000, 0b000],
-    // collider: [[true, false, false],
-    //            [false, false, false],
-    //            [false, false, false]],
+    // collider: [[X, O, O],
+    //            [O, O, O],
+    //            [O, O, O]],
     height: 1,
     width: 1
 };
 
 static VTWO: Shape = Shape {
     collider: [0b100, 0b100, 0b000],
-    // collider: [[true, false, false],
-    //            [true, false, false],
-    //            [false, false, false]],
+    // collider: [[X, O, O],
+    //            [X, O, O],
+    //            [O, O, O]],
     height: 2,
     width: 1
 };
 
 static FTWO: Shape = Shape {
     collider: [0b110, 0b000, 0b000],
-    // collider: [[true, true, false],
-    //            [false, false, false],
-    //            [false, false, false]],
+    // X X O
+    // O O O
+    // O O O
     height: 1,
     width: 2
 };
 
 static GOAL: Shape = Shape {
     collider: [0b010, 0b111, 0b000],
-    // collider: [[false, true, false],
-    //            [true, true, true],
-    //            [false, false, false]],
+    // O X O
+    // X X X
+    // O O O
     height: 2,
     width: 3
 };
 
 static LEFT: Shape = Shape {
     collider: [0b110, 0b100, 0b0],
-    // collider: [[true, true, false],
-    //            [true, false, false],
-    //            [false, false, false]],
+    // X X O
+    // X O O
+    // O O O
     height: 2,
     width: 2
 };
 
 static RIGHT: Shape = Shape {
     collider: [0b010, 0b110, 0b000],
-    // collider: [[false, true, false],
-    //            [true, true, false],
-    //            [false, false, false]],
+    // O X O
+    // X X O
+    // O O O
     height: 2,
     width: 2
 };
 
 static SQUARE: Shape = Shape {
     collider: [0b110, 0b110, 0b000],
-    // collider: [[true, true, false],
-    //            [true, true, false],
-    //            [false, false, false]],
+    // X X O
+    // X X O
+    // O O O
     height: 2,
     width: 2
 };
 
 fn show(pieces: &[Piece], height: usize, width: usize) {
-    let mut area: [u8; 6] = [0b0; 6]; // TODO: area literal
+    let mut area: [u8; 6] = [0b0; 6];
     for piece in pieces.iter() {
         for (y, row) in piece.shape.collider.iter().enumerate() {
             if piece.origin.0 + y < height {
@@ -129,17 +129,17 @@ fn show(pieces: &[Piece], height: usize, width: usize) {
 
 fn ten_board() -> Board {
     Board { pieces: vec!(
-        Piece { origin: (1,0), shape: &LEFT,  movable: true },
-        Piece { origin: (2,2), shape: &DOT,  movable: true },
-        Piece { origin: (3,1), shape: &SQUARE,  movable: true },
-        Piece { origin: (1,3), shape: &VTWO,  movable: true },
-        Piece { origin: (3,0), shape: &DOT,  movable: true },
-        Piece { origin: (3,3), shape: &DOT,  movable: true },
-        Piece { origin: (4,0), shape: &VTWO,  movable: true },
-        Piece { origin: (5,1), shape: &DOT,  movable: true },
+        Piece { origin: (1,0), shape: &LEFT,   movable: true },
+        Piece { origin: (2,2), shape: &DOT,    movable: true },
+        Piece { origin: (3,1), shape: &SQUARE, movable: true },
+        Piece { origin: (1,3), shape: &VTWO,   movable: true },
+        Piece { origin: (3,0), shape: &DOT,    movable: true },
+        Piece { origin: (3,3), shape: &DOT,    movable: true },
+        Piece { origin: (4,0), shape: &VTWO,   movable: true },
+        Piece { origin: (5,1), shape: &DOT,    movable: true },
         Piece { origin: (4,2), shape: &RIGHT,  movable: true },
-        Piece { origin: (0,0), shape: &DOT,  movable: false },
-        Piece { origin: (0,3), shape: &DOT,  movable: false },
+        Piece { origin: (0,0), shape: &DOT,    movable: false },
+        Piece { origin: (0,3), shape: &DOT,    movable: false },
     ),
             height: 6,
             width: 4,
@@ -204,7 +204,7 @@ fn area_for(pieces: &[Piece], ignore_location: usize, height: usize, width: usiz
     area
 }
 
-fn valid(piece: &Piece, area: &[u8], height: usize, width: usize) -> bool {
+fn valid(piece: &Piece, area: &[u8], _height: usize, width: usize) -> bool {
     for (y, row) in piece.shape.collider.iter().enumerate() {
         if row != &0b0 && ((area[piece.origin.0 + y] & (row << (width - 1) - piece.origin.1)) != 0b0) {
             return false;
@@ -243,23 +243,24 @@ fn goal(board: &Board) -> bool {
     board.pieces[2].origin.0 == 0
 }
 
+
 fn main() {
     let now = Instant::now();
-    let mut layer: Vec<Board> = vec!(twelve_board());
+    let mut layer: Vec<Board> = vec!(ten_board());
     let mut seen_boards: HashSet<Board> = HashSet::new();
     let mut counter: usize = 0;
     while counter < 90 {
         layer = expand_layer(&layer, &mut seen_boards);
         match layer.iter().find(|b| goal(b)) {
-            Some(_b) => {
+            Some(b) => {
                 println!("found the goal!");
-                // TODO show path
+                show(&b.pieces, b.height, b.width);
                 break;
             }
             None => {
             }
         }
-        println!("layer {} size: {} | {} s", counter, layer.len(), now.elapsed().as_secs());
+        println!("layer {} \t size: {} \t | {} s", counter, layer.len(), now.elapsed().as_secs());
         counter += 1;
     }
 }
