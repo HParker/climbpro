@@ -1,0 +1,44 @@
+layer 0 	 size: 3 	 | 0 s
+layer 1 	 size: 6 	 | 0 s
+layer 2 	 size: 12 	 | 0 s
+layer 3 	 size: 21 	 | 0 s
+layer 4 	 size: 33 	 | 0 s
+layer 5 	 size: 44 	 | 0 s
+layer 6 	 size: 54 	 | 0 s
+layer 7 	 size: 64 	 | 0 s
+layer 8 	 size: 76 	 | 0 s
+layer 9 	 size: 104 	 | 0 s
+layer 10 	 size: 141 	 | 0 s
+layer 11 	 size: 200 	 | 0 s
+layer 12 	 size: 259 	 | 0 s
+layer 13 	 size: 318 	 | 0 s
+layer 14 	 size: 381 	 | 0 s
+layer 15 	 size: 457 	 | 0 s
+layer 16 	 size: 473 	 | 0 s
+layer 17 	 size: 483 	 | 0 s
+layer 18 	 size: 483 	 | 0 s
+layer 19 	 size: 474 	 | 0 s
+layer 20 	 size: 498 	 | 0 s
+layer 21 	 size: 537 	 | 0 s
+layer 22 	 size: 590 	 | 0 s
+layer 23 	 size: 653 	 | 0 s
+layer 24 	 size: 700 	 | 0 s
+layer 25 	 size: 727 	 | 0 s
+layer 26 	 size: 765 	 | 0 s
+layer 27 	 size: 828 	 | 0 s
+layer 28 	 size: 932 	 | 0 s
+layer 29 	 size: 1050 	 | 0 s
+layer 30 	 size: 1201 	 | 0 s
+layer 31 	 size: 1357 	 | 0 s
+layer 32 	 size: 1507 	 | 0 s
+layer 33 	 size: 1587 	 | 0 s
+found the goal!
+-------
+0b111100
+0b111000
+0b100000
+0b111100
+0b111100
+0b111100
+-------
+0.11s user 0.01s system 95% cpu 0.122 total
